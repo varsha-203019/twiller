@@ -1,0 +1,8 @@
+backend/node_modules/
+backend/.env
+
+twiller/node_modules/
+twiller/.next/
+
+node_modules/
+.env
