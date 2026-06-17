@@ -105,7 +105,39 @@ const Feed = () => {
   const handlenewtweet = (newtweet: any) => {
     setTweets((prev: any) => [newtweet, ...prev]);
   };
+  const deleteTweetFromState = (tweetId: string) => {
+  setTweets((prev) =>
+    prev.filter((tweet) => tweet._id !== tweetId)
+  );
+};
+  const editTweet = async (id) => {
+  const newContent = prompt("Edit your tweet:");
+
+ if (!newContent) return;
+
+const confirmEdit = window.confirm(
+  "Save changes to this tweet?"
+);
+
+if (!confirmEdit) return;
+  try {
+    const res = await axiosInstance.put(`/post/${id}`, {
+      content: newContent,
+    });
+
+    console.log("UPDATED:", res.data);
+
+    setTweets((prev) =>
+      prev.map((t) =>
+        t._id === id ? { ...t, content: newContent } : t
+      )
+    );
+  } catch (error) {
+    console.log(error);
+  }
+};
   return (
+    
     <div className="min-h-screen">
       <div className="sticky top-0 bg-black/90 backdrop-blur-md border-b border-gray-800 z-10">
         <div className="px-4 py-3">
@@ -139,10 +171,19 @@ const Feed = () => {
                 <p>Loading tweets...</p>
               </div>
             </CardContent>
-          </Card>
-        ) : (
-          tweets.map((tweet: any) => <TweetCard key={tweet._id} tweet={tweet} />)
-        )}
+</Card>
+) : (
+  <>
+    {tweets.map((tweet: any) => (
+      <TweetCard
+        key={tweet._id}
+        tweet={tweet}
+        onEdit={editTweet}
+        onDelete={deleteTweetFromState}
+      />
+    ))}
+  </>
+)}
       </div>
     </div>
   );

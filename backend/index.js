@@ -126,10 +126,27 @@ app.post("/post", async (req, res) => {
     return res.status(400).send({ error: error.message });
   }
 });
+app.put("/post/:id", async (req, res) => {
+  try {
+    const updatedTweet = await Tweet.findByIdAndUpdate(
+      req.params.id,
+      { content: req.body.content },
+      { new: true }
+    );
+
+    res.status(200).send(updatedTweet);
+  } catch (error) {
+    res.status(400).send({ error: error.message });
+  }
+});
 // get all tweet
 app.get("/post", async (req, res) => {
   try {
-    const tweet = await Tweet.find().sort({ timestamp: -1 }).populate("author");
+    const tweet = await Tweet.find()
+      .sort({ timestamp: -1 })
+      .populate("author")
+      .populate("commentList.user");
+
     return res.status(200).send(tweet);
   } catch (error) {
     return res.status(400).send({ error: error.message });
@@ -140,27 +157,80 @@ app.post("/like/:tweetid", async (req, res) => {
   try {
     const { userId } = req.body;
     const tweet = await Tweet.findById(req.params.tweetid);
-    if (!tweet.likedBy.includes(userId)) {
+
+    if (tweet.likedBy.some(id => id.toString() === userId)) {
+      tweet.likes -= 1;
+      tweet.likedBy = tweet.likedBy.filter(
+        id => id.toString() !== userId
+      );
+    } else {
       tweet.likes += 1;
       tweet.likedBy.push(userId);
-      await tweet.save();
     }
+
+    await tweet.save();
+
     res.send(tweet);
   } catch (error) {
     return res.status(400).send({ error: error.message });
   }
 });
-// retweet 
 app.post("/retweet/:tweetid", async (req, res) => {
   try {
     const { userId } = req.body;
     const tweet = await Tweet.findById(req.params.tweetid);
-    if (!tweet.retweetedBy.includes(userId)) {
+
+    if (tweet.retweetedBy.some(id => id.toString() === userId)) {
+      tweet.retweets -= 1;
+      tweet.retweetedBy = tweet.retweetedBy.filter(
+        id => id.toString() !== userId
+      );
+    } else {
       tweet.retweets += 1;
       tweet.retweetedBy.push(userId);
-      await tweet.save();
     }
+
+    await tweet.save();
+
     res.send(tweet);
+  } catch (error) {
+    return res.status(400).send({ error: error.message });
+  }
+});
+app.post("/comment/:tweetid", async (req, res) => {
+  try {
+    const { userId, text } = req.body;
+
+    const tweet = await Tweet.findById(req.params.tweetid);
+
+    tweet.comments += 1;
+
+    tweet.commentList.push({
+      user: userId,
+      text,
+    });
+
+    await tweet.save();
+
+    const updatedTweet = await Tweet.findById(req.params.tweetid)
+      .populate("author")
+      .populate("commentList.user");
+
+    res.status(200).send(updatedTweet);
+  } catch (error) {
+    res.status(400).send({ error: error.message });
+  }
+});
+// DELETE TWEET
+app.delete("/post/:tweetid", async (req, res) => {
+  try {
+    const tweet = await Tweet.findByIdAndDelete(req.params.tweetid);
+
+    if (!tweet) {
+      return res.status(404).send({ message: "Tweet not found" });
+    }
+
+    return res.status(200).send({ message: "Tweet deleted successfully" });
   } catch (error) {
     return res.status(400).send({ error: error.message });
   }

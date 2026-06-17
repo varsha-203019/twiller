@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -14,9 +14,12 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import axiosInstance from "@/lib/axiosInstance";
 
-export default function TweetCard({ tweet }: any) {
+export default function TweetCard({ tweet, onEdit, onDelete }: any){
   const { user } = useAuth();
   const [tweetstate, settweetstate] = useState(tweet);
+  useEffect(() => {
+  settweetstate(tweet);
+}, [tweet]);
   const likeTweet = async (tweetId: string) => {
     try {
       const res = await axiosInstance.post(`/like/${tweetId}`, {
@@ -27,7 +30,15 @@ export default function TweetCard({ tweet }: any) {
       console.log(error);
     }
   };
+ const deleteTweet = async (tweetId: string) => {
+  try {
+    await axiosInstance.delete(`/post/${tweetId}`);
 
+    onDelete(tweetId);
+  } catch (error) {
+    console.log(error);
+  }
+};
   const retweetTweet = async (tweetId: string) => {
     try {
       const res = await axiosInstance.post(`/retweet/${tweetId}`, {
@@ -38,6 +49,22 @@ export default function TweetCard({ tweet }: any) {
       console.log(error);
     }
   };
+  const commentTweet = async (tweetId: string) => {
+  const text = prompt("Enter your comment:");
+
+  if (!text) return;
+
+  try {
+    const res = await axiosInstance.post(`/comment/${tweetId}`, {
+      userId: user?._id,
+      text,
+    });
+
+    settweetstate(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
   const formatNumber = (num: number) => {
     if (num >= 1000000) {
       return (num / 1000000).toFixed(1) + "M";
@@ -88,13 +115,28 @@ export default function TweetCard({ tweet }: any) {
                   })}
               </span>
               <div className="ml-auto">
+                <button
+  onClick={() => onEdit(tweetstate._id)}
+  className="text-blue-400 hover:text-blue-300 text-sm font-semibold ml-2"
+>
+  Edit
+</button>
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  className="p-1 rounded-full hover:bg-gray-900"
-                >
-                  <MoreHorizontal className="h-5 w-5 text-gray-500" />
-                </Button>
+  variant="ghost"
+  size="sm"
+  className="p-1 rounded-full hover:bg-red-900"
+  onClick={() => {
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this tweet?"
+  );
+
+  if (confirmDelete) {
+    deleteTweet(tweetstate._id);
+  }
+}}
+>
+  <MoreHorizontal className="h-5 w-5 text-red-500" />
+</Button>
               </div>
             </div>
 
@@ -102,6 +144,18 @@ export default function TweetCard({ tweet }: any) {
               {tweetstate.content}
             </div>
 
+            {tweetstate.commentList?.length > 0 && (
+  <div className="mt-2 space-y-1">
+    {tweetstate.commentList.map((comment: any, index: number) => (
+      <div
+        key={index}
+        className="text-sm text-gray-400 border-l-2 border-gray-700 pl-2"
+      >
+       <strong>{comment.user?.username || "User"}:</strong> {comment.text}
+      </div>
+    ))}
+  </div>
+)}
             {tweetstate.image && (
               <div className="mb-3 rounded-2xl overflow-hidden">
                 <img
@@ -114,10 +168,11 @@ export default function TweetCard({ tweet }: any) {
 
             <div className="flex items-center justify-between max-w-md">
               <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center space-x-2 p-2 rounded-full hover:bg-blue-900/20 text-gray-500 hover:text-blue-400 group"
-              >
+  variant="ghost"
+  size="sm"
+  className="flex items-center space-x-2 p-2 rounded-full hover:bg-blue-900/20 text-gray-500 hover:text-blue-400 group"
+  onClick={() => commentTweet(tweetstate._id)}
+>
                 <MessageCircle className="h-5 w-5 group-hover:text-blue-400" />
                 <span className="text-sm">
                   {formatNumber(tweetstate.comments)}
