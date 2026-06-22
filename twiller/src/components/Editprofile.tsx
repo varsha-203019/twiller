@@ -74,6 +74,8 @@ const Editprofile = ({ isopen, onclose }: any) => {
     if (!e.target.files || e.target.files.length === 0) return;
     setIsLoading(true);
     const image = e.target.files[0];
+    console.log("SELECTED FILE:", image);
+console.log("FILE NAME:", image?.name);
     const formdataimg = new FormData();
     formdataimg.set("image", image);
     try {
@@ -82,11 +84,14 @@ const Editprofile = ({ isopen, onclose }: any) => {
         formdataimg
       );
       const url = res.data.data.display_url;
+console.log("IMAGE URL:", url);
       if (url) {
         setFormdata((prev) => ({ ...prev, avatar: url }));
+        console.log("FORM DATA UPDATED:", url);
       }
-    } catch (error) {
-      console.log(error);
+    catch (error: any) {
+  console.log("UPLOAD ERROR:", error.response?.data);
+}
     } finally {
       setIsLoading(false);
     }
@@ -152,7 +157,10 @@ const Editprofile = ({ isopen, onclose }: any) => {
               <div className="absolute -bottom-16 left-4">
                 <div className="relative">
                   <Avatar className="h-32 w-32 border-4 border-black">
-                    <AvatarImage src={user?.avatar} alt={user?.displayName} />
+                    <AvatarImage
+  src={formData.avatar || user?.avatar}
+  alt={user?.displayName}
+/>
                     <AvatarFallback className="text-2xl">
                       {user?.displayName?.[0]}
                     </AvatarFallback>

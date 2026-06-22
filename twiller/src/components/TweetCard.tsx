@@ -1,5 +1,5 @@
 "use client";
-
+import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -15,6 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 import axiosInstance from "@/lib/axiosInstance";
 
 export default function TweetCard({ tweet, onEdit, onDelete }: any){
+  const router = useRouter();
   const { user } = useAuth();
   const [tweetstate, settweetstate] = useState(tweet);
   useEffect(() => {
@@ -32,11 +33,18 @@ export default function TweetCard({ tweet, onEdit, onDelete }: any){
   };
  const deleteTweet = async (tweetId: string) => {
   try {
+    console.log("Deleting:", tweetId);
+
     await axiosInstance.delete(`/post/${tweetId}`);
 
-    onDelete(tweetId);
+    console.log("Delete API Success");
+
+    if (onDelete) {
+      console.log("Calling onDelete");
+      onDelete(tweetId);
+    }
   } catch (error) {
-    console.log(error);
+    console.log("Delete Error:", error);
   }
 };
   const retweetTweet = async (tweetId: string) => {
@@ -77,8 +85,11 @@ export default function TweetCard({ tweet, onEdit, onDelete }: any){
   const isLiked = tweetstate.likedBy?.includes(user?._id);
   const isRetweet = tweetstate.retweetedBy?.includes(user?._id);
   return (
-    <Card className="bg-black border-gray-800 border-x-0 border-t-0 rounded-none hover:bg-gray-950/50 transition-colors cursor-pointer">
-      <CardContent className="p-4">
+  <Card
+  className="bg-black border-gray-800 border-x-0 border-t-0 rounded-none hover:bg-gray-950/50 transition-colors cursor-pointer"
+  
+>
+    <CardContent>
         <div className="flex space-x-3">
           <Avatar className="h-12 w-12">
             <AvatarImage
@@ -116,7 +127,10 @@ export default function TweetCard({ tweet, onEdit, onDelete }: any){
               </span>
               <div className="ml-auto">
                 <button
-  onClick={() => onEdit(tweetstate._id)}
+  onClick={(e) => {
+    e.stopPropagation();
+    onEdit(tweetstate._id);
+  }}
   className="text-blue-400 hover:text-blue-300 text-sm font-semibold ml-2"
 >
   Edit
@@ -125,7 +139,9 @@ export default function TweetCard({ tweet, onEdit, onDelete }: any){
   variant="ghost"
   size="sm"
   className="p-1 rounded-full hover:bg-red-900"
-  onClick={() => {
+  onClick={(e) => {
+  e.stopPropagation();
+
   const confirmDelete = window.confirm(
     "Are you sure you want to delete this tweet?"
   );
@@ -171,7 +187,10 @@ export default function TweetCard({ tweet, onEdit, onDelete }: any){
   variant="ghost"
   size="sm"
   className="flex items-center space-x-2 p-2 rounded-full hover:bg-blue-900/20 text-gray-500 hover:text-blue-400 group"
-  onClick={() => commentTweet(tweetstate._id)}
+  onClick={(e) => {
+  e.stopPropagation();
+  commentTweet(tweetstate._id);
+}}
 >
                 <MessageCircle className="h-5 w-5 group-hover:text-blue-400" />
                 <span className="text-sm">
