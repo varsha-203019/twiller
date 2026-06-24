@@ -71,31 +71,37 @@ const Editprofile = ({ isopen, onclose }: any) => {
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    setIsLoading(true);
-    const image = e.target.files[0];
-    console.log("SELECTED FILE:", image);
-console.log("FILE NAME:", image?.name);
-    const formdataimg = new FormData();
-    formdataimg.set("image", image);
-    try {
-      const res = await axios.post(
-        "https://api.imgbb.com/1/upload?key=97f3fb960c3520d6a88d7e29679cf96f",
-        formdataimg
-      );
-      const url = res.data.data.display_url;
-console.log("IMAGE URL:", url);
-      if (url) {
-        setFormdata((prev) => ({ ...prev, avatar: url }));
-        console.log("FORM DATA UPDATED:", url);
-      }
-    catch (error: any) {
-  console.log("UPLOAD ERROR:", error.response?.data);
-}
-    } finally {
-      setIsLoading(false);
+  if (!e.target.files || e.target.files.length === 0) return;
+
+  setIsLoading(true);
+
+  const image = e.target.files[0];
+  console.log("SELECTED FILE:", image);
+  console.log("FILE NAME:", image?.name);
+
+  const formdataimg = new FormData();
+  formdataimg.set("image", image);
+
+  try {
+    const res = await axios.post(
+      "https://api.imgbb.com/1/upload?key=f47e9dcd0bdd30f41c41df62c03ca00d",
+      formdataimg
+    );
+
+    const url = res.data.data.display_url;
+    console.log("IMAGE URL:", url);
+
+    if (url) {
+      setFormdata((prev) => ({ ...prev, avatar: url }));
+      console.log("FORM DATA UPDATED:", url);
     }
-  };
+  } catch (error: any) {
+  console.log("UPLOAD ERROR FULL:", error.response?.data);
+  console.log("ERROR MESSAGE:", error.response?.data?.error?.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-2xl bg-black border-gray-800 text-white max-h-[90vh] overflow-y-auto">
